@@ -35,6 +35,10 @@ for arg in $*
 do
 	case ${arg} in
 		teleop=*) teleop=${arg#teleop=};;
+		world=*)	world=${arg#world=};
+					world_file=${ws}/src/${project}/worlds/${world}.world;
+					map_file=${ws}/src/${project}/maps/${world}.yaml;
+					mapname=${world};;
 		*)	echo -e ${MAGENTA}"Unknown argument: ${arg}"${NC};
 	 		echo -e ${GREEN}"Usage: $(basename $0): [teleop=keyboard|interactive]"${NC};
 			;;
