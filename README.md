@@ -1,4 +1,4 @@
-# HomeServiceRobot
+# Home Service Robot Project
 
 The Home Service Robot project develops an environment and a mobile robot which is programmed to pick up an object at one location and deliver it to another location. The project encompasses creating a world in gazebo, mapping it, path planning, localization and using markers to simulate picking up and moving the object.
 
