@@ -13,6 +13,8 @@ The tasks required to complete the project are:
 * Write a pick_objects node in C++ that commands the robot to move to the desired pickup and drop off zones.
 * Write an add_markers node that subscribes to robot odometry keeping track of the robot pose, and publishes markers to rviz.
 
+## The Payload - A Coffee Cup
+
 ![alt text](images/rviz_coffee_cup_view.png "Coffee Delivered!")
 
 ## Discussion
