@@ -33,4 +33,4 @@ The Jetson TX2 is an excellent platform to implement this project. It has enough
 
 ## Home Service in Action
 
-![alt text](images/HomeServiceLoop.gif "Home Service in Action")
+![alt text](images/HomeServiceProject.gif "Home Service in Action")
