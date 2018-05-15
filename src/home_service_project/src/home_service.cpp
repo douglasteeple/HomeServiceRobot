@@ -37,24 +37,51 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 typedef boost::shared_ptr< ::move_base_msgs::MoveBaseFeedback const > MoveBaseFeedbackConstPtr;
 typedef boost::shared_ptr< ::move_base_msgs::MoveBaseResult const > MoveBaseResultConstPtr;
 
-visualization_msgs::Marker marker;
+visualization_msgs::Marker coffeecup;
+visualization_msgs::Marker woohoo;
 ros::Publisher marker_pub;
 
-visualization_msgs::Marker createMarker(ros::Publisher *marker_pub) {
+visualization_msgs::Marker createMarker(ros::Publisher *marker_pub, const char *text=nullptr, float howbig=0.5) {
 	ros::NodeHandle nodehandle;
-	*marker_pub = nodehandle.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+	if (marker_pub && !*marker_pub) *marker_pub = nodehandle.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 	visualization_msgs::Marker marker;
 	// Set the frame ID and timestamp.
 	marker.header.frame_id = "map";//"base_footprint";
 	marker.header.stamp = ros::Time::now();
 
 	// Set the namespace and id for this marker.
-	marker.ns = "marker";
+	marker.ns = "basic_shapes";
 	marker.id = 0;
 
 	// Set the marker type.
-	marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-	marker.mesh_resource = "package://home_service_project/meshes/CoffeeCup.dae";
+	if (text) {
+		marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+		marker.text = std::string(text);
+		marker.scale.x = howbig;
+		marker.scale.y = howbig;
+		marker.scale.z = howbig;
+		// Set the color
+		// Dodger blue: 0.118, 0.565, 1.000
+		// Lawn Green: 0.486 0.988 0
+		marker.color.r = 0.486;
+		marker.color.g = 0.988;
+		marker.color.b = 0.0;
+		marker.color.a = 1.0;
+	} else {
+		marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+		marker.mesh_resource = "package://home_service_project/meshes/CoffeeCup.dae";
+		// Set the scale of the marker
+		marker.scale.x = 0.125;
+		marker.scale.y = 0.125;
+		marker.scale.z = 0.125;
+		// Set the color
+		// Gold: 1.000, 0.843, 0.000
+		marker.color.r = 1.0;
+		marker.color.g = 0.843;
+		marker.color.b = 0.0;
+		marker.color.a = 1.0;
+
+	}
 
 	// Set the marker action.
 	marker.action = visualization_msgs::Marker::ADD;
@@ -68,54 +95,8 @@ visualization_msgs::Marker createMarker(ros::Publisher *marker_pub) {
 	marker.pose.orientation.z = 0.0;
 	marker.pose.orientation.w = 1.0;
 
-	// Set the scale of the marker
-	marker.scale.x = 0.125;
-	marker.scale.y = 0.125;
-	marker.scale.z = 0.125;
-
-	// Set the color
-	// Dodger blue: 0.118, 0.565, 1.000
-	// Gold: 1.000, 0.843, 0.000
-	marker.color.r = 1.0;
-	marker.color.g = 0.843;
-	marker.color.b = 0.0;
-	marker.color.a = 1.0;
-
-	marker.lifetime = ros::Duration();
+	marker.lifetime = ros::Duration(100000);
 	return marker;
-}
-
-void odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
-{
-#ifdef TRACE
-	ROS_INFO("Seq: [%d]", msg->header.seq);
-	ROS_INFO("Position-> x: [%g], y: [%g], z: [%g]", msg->pose.pose.position.x,msg->pose.pose.position.y, msg->pose.pose.position.z);
-	ROS_INFO("Orientation-> x: [%f], y: [%f], z: [%f], w: [%f]", msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
-	ROS_INFO("Vel-> Linear: [%f], Angular: [%f]", msg->twist.twist.linear.x,msg->twist.twist.angular.z);
-#endif
-	//ROS_INFO("Moving marker to %g %g", msg->pose.pose.position.x, msg->pose.pose.position.y);
-	marker.pose = msg->pose.pose;
-}
-
-void doneCb(const actionlib::SimpleClientGoalState& state, const MoveBaseResultConstPtr& result)
-{
-  ROS_INFO("Finished in state [%s]", state.toString().c_str());
-}
-
-// Called once when the goal becomes active
-void activeCb()
-{
-  ROS_INFO("Goal just went active");
-	ros::spinOnce();
-}
-
-// Called every time feedback is received for the goal
-void feedbackCb(const MoveBaseFeedbackConstPtr& feedback)
-{
-	marker_pub.publish(marker);
-	marker.pose.position = feedback->base_position.pose.position;
-	marker.pose.position.z += 0.5;
-	ros::spinOnce();
 }
 
 const geometry_msgs::Pose newPose(float px, float py, float pz=0, float qx=0, float qy=0, float qz=0, float qw=1) {
@@ -130,7 +111,62 @@ const geometry_msgs::Pose newPose(float px, float py, float pz=0, float qx=0, fl
 	return pose;
 }
 
-bool doSendGoalsAndWait(MoveBaseClient &ac, visualization_msgs::Marker &marker, ros::Publisher &marker_pub, std::vector < geometry_msgs::Pose > const &posevector) {
+void showMarkerAt(float x, float y, visualization_msgs::Marker &marker, float sleeptime=0.0) {
+	// publish at pick up point...
+	marker.pose = newPose(x, y);
+	marker.action = visualization_msgs::Marker::ADD;
+	marker_pub.publish(marker);
+	if (marker.type == visualization_msgs::Marker::TEXT_VIEW_FACING) {
+		ROS_INFO("Publishing marker at %g %g %s", x, y, (char *)marker.text.c_str());
+	} else {
+		ROS_INFO("Publishing marker at %g %g", x, y);
+	}
+	if (sleeptime > 0.0) {
+		// wait a bit....
+		ros::Duration(sleeptime).sleep(); // sleep for 5 seconds
+		// remove the marker...
+		marker.action = visualization_msgs::Marker::DELETE;
+		marker_pub.publish(marker);
+	}
+}
+
+#ifdef USE_ODOM
+void odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
+{
+	//ROS_INFO("Seq: [%d]", msg->header.seq);
+	//ROS_INFO("Position-> x: [%g], y: [%g], z: [%g]", msg->pose.pose.position.x,msg->pose.pose.position.y, msg->pose.pose.position.z);
+	//ROS_INFO("Orientation-> x: [%f], y: [%f], z: [%f], w: [%f]", msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
+	//ROS_INFO("Vel-> Linear: [%f], Angular: [%f]", msg->twist.twist.linear.x,msg->twist.twist.angular.z);
+x	//ROS_INFO("Moving coffeecup to %g %g", msg->pose.pose.position.x, msg->pose.pose.position.y);
+	coffeecup.pose = msg->pose.pose;
+}
+#endif
+
+static bool active = false;
+
+void doneCb(const actionlib::SimpleClientGoalState& state, const MoveBaseResultConstPtr& result)
+{
+  ROS_INFO("Finished in state [%s]", state.toString().c_str());
+  active = false;
+}
+// Called once when the goal becomes active
+void activeCb()
+{
+	ROS_INFO("Goal just went active");
+	//active = true;
+	ros::spinOnce();
+}
+
+// Called every time feedback is received for the goal
+void feedbackCb(const MoveBaseFeedbackConstPtr& feedback)
+{
+	coffeecup.pose.position = feedback->base_position.pose.position;
+	coffeecup.pose.position.z += 0.5;
+	if (active) marker_pub.publish(coffeecup);
+	ros::spinOnce();
+}
+
+bool doSendGoalsAndWait(MoveBaseClient &ac, std::vector < std::pair <geometry_msgs::Pose, bool> > const &posevector, visualization_msgs::Marker &marker) {
 
 	move_base_msgs::MoveBaseGoal goal;
 
@@ -148,21 +184,25 @@ bool doSendGoalsAndWait(MoveBaseClient &ac, visualization_msgs::Marker &marker, 
 
 	// Define a position and orientation for the robot to reach
 	size_t count = posevector.size();
-	for (const auto &pose : posevector) {
+	for (const auto &posepair : posevector) {
+		geometry_msgs::Pose pose = posepair.first;
+		active = posepair.second;
 		marker.pose = goal.target_pose.pose = pose;
+		marker.action = visualization_msgs::Marker::ADD;
 		count--;
 
 		// Send the goal position and orientation for the robot to reach
 		ROS_INFO("Sending the  goal x=%g y=%g w=%g", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.w);
 		ac.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
 
-		// Wait 30 seconds for the results
+		// Wait 60 seconds for the results
 		bool finished_before_timeout = ac.waitForResult(ros::Duration(60.0));
 
 		// Check if the robot reached its goal
 		if ((ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)) {
 			ROS_INFO("Reached the %sgoal", (count==0?"final ":""));
-			marker_pub.publish(marker);
+			marker.action = visualization_msgs::Marker::ADD;
+			if (active) marker_pub.publish(marker);
 			const int wait_time = 5;
 			ROS_INFO("Waiting for %d seconds", wait_time);
 			int msecs = wait_time*1000;
@@ -183,7 +223,7 @@ int main(int argc, char** argv){
 	ros::init(argc, argv, "home_service");
 
 	// Create a marker
-	marker = createMarker(&marker_pub);
+	coffeecup = createMarker(&marker_pub);
 
 #ifdef USE_ODOM
 	// Create odometer subscriber
@@ -199,14 +239,23 @@ int main(int argc, char** argv){
 	}
 
 	// wait so the screens can get organized
-	ros::Duration(15.0).sleep(); // sleep for 15 seconds
+	ros::Duration(10.0).sleep(); // sleep for 10 seconds
 
-	// send a vector of goals
-	std::vector < geometry_msgs::Pose > poses;
-	//poses.push_back(newPose(0.0, 1.0));
-	poses.push_back(newPose(6.5, 0.0));
-	//poses.push_back(newPose(0.0, 0.0));
-	doSendGoalsAndWait(ac, marker, marker_pub, poses);
+	woohoo = createMarker(&marker_pub, "Woohoo! Coffee is Served", 0.5);
+
+	// show marker at pick up point for 5 seconds...
+	showMarkerAt(-0.5, -1.0, coffeecup, 5.0);
+
+	// send a vector of pairs of goals and whether to show marker
+	std::vector < std::pair <geometry_msgs::Pose, bool> > posepairs;
+	// move to the pickup point without the marker
+	posepairs.push_back({newPose(-0.5, -1.0),false});
+	// move to the dropoff point showing the marker
+	posepairs.push_back({newPose(6.5, 0.0),true});
+	// off we go...
+	doSendGoalsAndWait(ac, posepairs, coffeecup);
+	// Woohoo!
+	showMarkerAt(6.5, 0.0, woohoo);
 
 	// spin so the messages remain on the terminal screen...
 	ros::spin();
