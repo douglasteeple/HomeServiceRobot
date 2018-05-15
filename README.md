@@ -32,6 +32,6 @@ I had trouble with AMCL local mapping being out of sync with the global map. As 
 
 The Jetson TX2 is an excellent platform to implement this project. It has enough computing power to smoothly implement the robot motions. Using this platform I was able to successfully complete all aspects of the project. In the future it would be interesting to put the Jetson board on an actual *roomba* or *turlebot* robot and have it move through a real environment.
 
-## Home Service in Action
+## Home Service in Action (Be patient, it takes a moment to get started...)
 
 ![alt text](images/HomeServiceProject.gif "Home Service in Action")
