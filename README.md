@@ -1,6 +1,6 @@
 # Home Service Robot Project
 
-The Home Service Robot project develops an environment and a mobile robot which is programmed to pick up an object at one location and deliver it to another location. The project encompasses creating a world in gazebo, mapping it, path planning, localization and using markers to simulate picking up and moving the object.
+The Home Service Robot project develops an environment and a mobile robot which is programmed to pick up an object at one location and deliver it to another location. The project encompasses creating a world in gazebo, mapping it using a wall following node, moving the mobile to goal locations via a path, localization and using markers to simulate picking up and moving the object.
 
 ## Summary of Tasks
 
@@ -12,6 +12,7 @@ The tasks required to complete the project are:
 * Use the 2D Nav Goal arrow in rviz to move to two different desired positions and orientations.
 * Write a pick_objects node in C++ that commands the robot to move to the desired pickup and drop off zones.
 * Write an add_markers node that subscribes to robot odometry keeping track of the robot pose, and publishes markers to rviz.
+* Combine all of the forgoing to simulate a robot moving to a pick up point, and carrying a virtual object to a dropoff point.
 
 ## The Payload - A Coffee Cup
 
